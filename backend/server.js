@@ -1,25 +1,46 @@
+cat > server.js << 'EOF'
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
 
-const Contact = require('./models/Contact');
-
 const app = express();
-app.use(cors());
+
+app.use(cors({
+  origin: [
+    'https://rasheduzzaman-portfolio-kutm.vercel.app',
+    'http://localhost:3000'
+  ],
+  methods: ['GET', 'POST'],
+  credentials: true
+}));
+
 app.use(express.json());
 
-// Connect to MongoDB
+// Connect MongoDB
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('MongoDB connected'))
-  .catch(err => console.error(err));
+  .then(() => console.log('MongoDB Connected'))
+  .catch(err => console.log('MongoDB Error:', err));
 
-// Health check
-app.get('/api', (req, res) => {
+// Contact Schema
+const contactSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  email: { type: String, required: true },
+  message: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now }
+});
+
+const Contact = mongoose.model('Contact', contactSchema);
+
+// Routes
+app.get('/', (req, res) => {
   res.json({ message: 'Rasheduzzaman Portfolio API is running!' });
 });
 
-// POST contact form
+app.get('/api', (req, res) => {
+  res.json({ message: 'API endpoint working!' });
+});
+
 app.post('/api/contact', async (req, res) => {
   try {
     const { name, email, message } = req.body;
@@ -33,3 +54,6 @@ app.post('/api/contact', async (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+module.exports = app;
+EOF
